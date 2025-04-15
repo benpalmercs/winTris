@@ -1,29 +1,28 @@
 
 const cellSize = 30; // Size of each cell in pixels
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-        // Get canvas context
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
 let board = [[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[0,0,0,0,0,0,0,0,0,0],
-							[1,1,1,0,1,1,1,1,1,1],
-							[1,1,1,1,1,1,1,1,1,1],
-							[1,1,1,1,1,1,0,1,1,1]];
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0]];
 function displayBoard(board){
 	let string = "";
 	for(var y = 0;y<board.length;y++){
@@ -57,20 +56,22 @@ function fancyDisplay(board) {
 }
 
 function displayToCanvas(board) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawing
+	ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawing
 
-            for (let y = 0; y < board.length; y++) {
-                for (let x = 0; x < board[y].length; x++) {
-                    // Draw the background
-                    ctx.fillStyle = board[y][x] === 1 ? "#007bff" : "#ffffff"; // Color for filled or empty
-                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+	for (let y = 0; y < board.length; y++) {
+		for (let x = 0; x < board[y].length; x++) {
+			// Draw the background
+			ctx.fillStyle = board[y][x] === 1 ? "#007bff" : "#ffffff"; // Color for filled or empty
+			ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
 
-                    // Draw grid lines (optional)
-                    ctx.strokeStyle = "#000000"; // Grid line color
-                    ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
-                }
-            }
-        }
+			// Draw grid lines (optional)
+			ctx.strokeStyle = "#000000"; // Grid line color
+			ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+		}
+	}
+
+}
+
 function lineClear(board,row){
 	let rowU = 20-row;
 	for(var y = rowU;y>0;y--){
@@ -232,6 +233,7 @@ class oPiece extends Piece{
 									new pieceTile(myBoard,x+1,y-1)]
 	}
 }
+
 class tPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
@@ -292,17 +294,18 @@ class iPiece extends Piece{
 	}
 }
 
-displayToCanvas(board);
-
-const myPiece = new jPiece(board,4,1);
 
 displayToCanvas(board);
+
+let currentPiece = new oPiece(board, 4, 1); // Start with an O piece
 
 function handleKeyDown(event) {
 	if (event.key === "ArrowLeft") {
-		myPiece.moveLeft(); // Move piece left
+		currentPiece.moveLeft(); // Move piece left
 	} else if (event.key === "ArrowRight") {
-		myPiece.moveRight(); // Move piece right
+		currentPiece.moveRight(); // Move piece right
+	} else if (event.key === "ArrowDown") {
+		currentPiece.moveDown();
 	}
 
 	displayToCanvas(board); // Redraw the board after the move
@@ -310,6 +313,40 @@ function handleKeyDown(event) {
 
 // Add event listener for keydown
 window.addEventListener("keydown", handleKeyDown);
+
+
+
+function gameLoop() {
+	// Try to move down
+	if (currentPiece.canMoveDown()) {
+		currentPiece.moveDown();
+	} else {
+		// Lock the piece in place (it's already projected on the board)
+		// Check for cleared lines
+		for (let row = 0; row < board.length; row++) {
+			if (isCleared(board, 20 - row)) {
+				lineClear(board, 20 - row);
+			}
+		}
+		// Spawn a new piece (you can randomize this later)
+		let rand = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
+		switch(rand){
+			case(1):currentPiece = new oPiece(board, 4, 1);break;
+			case(2):currentPiece = new tPiece(board, 4, 1);break;
+			case(3):currentPiece = new sPiece(board, 4, 1);break;
+			case(4):currentPiece = new zPiece(board, 4, 1);break;
+			case(5):currentPiece = new lPiece(board, 4, 1);break;
+			case(6):currentPiece = new jPiece(board, 4, 1);break;
+			case(7):currentPiece = new iPiece(board, 4, 1);break;
+		}
+		
+	}
+	displayToCanvas(board);
+}
+
+// Run the loop every 500ms (or faster for more difficulty)
+setInterval(gameLoop, 500);
+
 
 
 							
