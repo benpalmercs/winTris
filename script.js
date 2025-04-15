@@ -23,6 +23,7 @@ let board = [[0,0,0,0,0,0,0,0,0,0],
 			[0,0,0,0,0,0,0,0,0,0],
 			[0,0,0,0,0,0,0,0,0,0],
 			[0,0,0,0,0,0,0,0,0,0]];
+
 function displayBoard(board){
 	let string = "";
 	for(var y = 0;y<board.length;y++){
@@ -186,6 +187,7 @@ class Piece {
 	
 	moveLeft(){
 		if(this.canMoveLeft()){ 
+			this.x -=1;
 			this.remove();
 			for(var i = 0;i<this.pieces.length;i++){
 				this.pieces[i].moveLeft();
@@ -199,6 +201,7 @@ class Piece {
 	
 	moveRight(){
 		if(this.canMoveRight()){
+			this.x +=1;
 			this.remove();
 			for(var i = 0;i<this.pieces.length;i++){
 				this.pieces[i].moveRight();
@@ -212,6 +215,7 @@ class Piece {
 	
 	moveDown(){
 		if(this.canMoveDown()){
+			this.y += 1;
 			this.remove();
 			for(var i = 0;i<this.pieces.length;i++){
 				this.pieces[i].moveDown();
@@ -228,19 +232,58 @@ class oPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
 		this.pieces = [new pieceTile(myBoard,x,y), 
-									new pieceTile(myBoard,x+1,y), 
-									new pieceTile(myBoard,x,y-1),
-									new pieceTile(myBoard,x+1,y-1)]
+					new pieceTile(myBoard,x+1,y), 
+					new pieceTile(myBoard,x,y-1),
+					new pieceTile(myBoard,x+1,y-1)]
 	}
 }
 
 class tPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
+		this.state = 0;
 		this.pieces = [new pieceTile(myBoard,x,y), 
-									new pieceTile(myBoard,x+1,y), 
-									new pieceTile(myBoard,x,y-1),
-									new pieceTile(myBoard,x-1,y)];
+					new pieceTile(myBoard,x+1,y), 
+					new pieceTile(myBoard,x,y-1),
+					new pieceTile(myBoard,x-1,y)];
+	}
+	
+	flipA(){
+		this.remove();
+		for(var i = 0;i<this.pieces.length;i++){
+			let tX = this.x-this.pieces[i].x;
+			let tY = this.y-this.pieces[i].y;
+			if(tX !=0){
+				tY = tX;
+				tX = 0;
+			}
+			else{
+				tX = tY;
+				tY = 0;
+			}
+			this.pieces[i].x = x-tX;
+			this.pieces[i].y = y-tY;
+		}
+		this.project();
+	}
+
+	flipB(){
+		this.remove();
+		for(var i = 0;i<this.pieces.length;i++){
+			let tX = this.x-this.pieces[i].x;
+			let tY = this.y-this.pieces[i].y;
+			if(tX !=0){
+				tY = -tX;
+				tX = 0;
+			}
+			else{
+				tX = -tY;
+				tY = 0;
+			}
+			this.pieces[i].x = this.x-tX;
+			this.pieces[i].y = this.y-tY;
+		}
+		this.project();
 	}
 }
 
@@ -248,9 +291,9 @@ class zPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
 		this.pieces = [new pieceTile(myBoard,x,y), 
-									new pieceTile(myBoard,x+1,y), 
-									new pieceTile(myBoard,x,y-1),
-									new pieceTile(myBoard,x-1,y-1)];
+					new pieceTile(myBoard,x+1,y), 
+					new pieceTile(myBoard,x,y-1),
+					new pieceTile(myBoard,x-1,y-1)];
 	}
 }
 
@@ -258,19 +301,20 @@ class sPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
 		this.pieces = [new pieceTile(myBoard,x,y), 
-									new pieceTile(myBoard,x+1,y-1), 
-									new pieceTile(myBoard,x,y-1),
-									new pieceTile(myBoard,x-1,y)];
+					new pieceTile(myBoard,x+1,y-1), 
+					new pieceTile(myBoard,x,y-1),
+					new pieceTile(myBoard,x-1,y)];
 	}
 }
 
 class lPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
+		this.state = 0;
 		this.pieces = [new pieceTile(myBoard,x,y), 
-									new pieceTile(myBoard,x-1,y), 
-									new pieceTile(myBoard,x+1,y),
-									new pieceTile(myBoard,x+1,y-1)];
+					new pieceTile(myBoard,x-1,y), 
+					new pieceTile(myBoard,x+1,y),
+					new pieceTile(myBoard,x+1,y-1)];
 	}
 }
 
@@ -278,9 +322,9 @@ class jPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
 		this.pieces = [new pieceTile(myBoard,x,y), 
-									new pieceTile(myBoard,x-1,y), 
-									new pieceTile(myBoard,x+1,y),
-									new pieceTile(myBoard,x-1,y-1)];
+					new pieceTile(myBoard,x-1,y), 
+					new pieceTile(myBoard,x+1,y),
+					new pieceTile(myBoard,x-1,y-1)];
 	}
 }
 
@@ -288,16 +332,16 @@ class iPiece extends Piece{
 	constructor(myBoard,x,y){
 		super(myBoard,x,y);
 		this.pieces = [new pieceTile(myBoard,x,y), 
-									new pieceTile(myBoard,x-1,y), 
-									new pieceTile(myBoard,x+1,y),
-									new pieceTile(myBoard,x+2,y)];
+					new pieceTile(myBoard,x-1,y), 
+					new pieceTile(myBoard,x+1,y),
+					new pieceTile(myBoard,x+2,y)];
 	}
 }
 
 
 displayToCanvas(board);
 
-let currentPiece = new oPiece(board, 4, 1); // Start with an O piece
+let currentPiece = new tPiece(board, 4, 1); // Start with an O piece
 
 function handleKeyDown(event) {
 	if (event.key === "ArrowLeft") {
@@ -306,6 +350,10 @@ function handleKeyDown(event) {
 		currentPiece.moveRight(); // Move piece right
 	} else if (event.key === "ArrowDown") {
 		currentPiece.moveDown();
+	} else if (event.key === "x") {
+		currentPiece.flipA();
+	} else if (event.key === "z") {
+		currentPiece.flipB();
 	}
 
 	displayToCanvas(board); // Redraw the board after the move
@@ -329,7 +377,8 @@ function gameLoop() {
 			}
 		}
 		// Spawn a new piece (you can randomize this later)
-		let rand = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
+		// let rand = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
+		let rand = 2;
 		switch(rand){
 			case(1):currentPiece = new oPiece(board, 4, 1);break;
 			case(2):currentPiece = new tPiece(board, 4, 1);break;
