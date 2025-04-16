@@ -1,4 +1,5 @@
 
+
 const cellSize = 30; // Size of each cell in pixels
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -226,6 +227,47 @@ class Piece {
 			console.log("bump");
 		}
 	}
+	
+	hardDrop(){
+		while(this.canMoveDown()){
+			this.moveDown();
+		}
+	}
+	
+	canFlip(d){
+		for(var i = 0;i<this.pieces.length;i++){
+				let tX = this.x-this.pieces[i].x;
+				let tY = this.y-this.pieces[i].y;
+				let newX,newY = 0;
+				newX= (tX*0)+tY*d;
+				newY = (tX*-d)+tY*0;
+				if(this.board[this.y+newY][this.x+newX]===undefined || 
+					(this.board[this.y+newY][this.x+newX] === 1 && 
+					!this.isInBlock(this.y+newY,this.x+newX))){
+					return false;
+				}
+		}
+		return true;
+	}
+	
+	flip(d){
+		if(this.canFlip(d)){
+			for(var i = 0;i<this.pieces.length;i++){
+				this.remove();
+				let tX = this.x-this.pieces[i].x;
+				let tY = this.y-this.pieces[i].y;
+				let newX,newY = 0;
+				newX= (tX*0)+(tY*d);
+				newY = (tX*-d)+(tY*0);
+				this.pieces[i].x = this.x+newX;
+				this.pieces[i].y = this.y+newY;
+				this.project();
+			}
+		}
+		else{console.log("bump");}
+	}
+	
+	
 }
 
 class oPiece extends Piece{
@@ -247,45 +289,8 @@ class tPiece extends Piece{
 					new pieceTile(myBoard,x,y-1),
 					new pieceTile(myBoard,x-1,y)];
 	}
-	
-	flipA(){
-		this.remove();
-		for(var i = 0;i<this.pieces.length;i++){
-			let tX = this.x-this.pieces[i].x;
-			let tY = this.y-this.pieces[i].y;
-			if(tX !=0){
-				tY = tX;
-				tX = 0;
-			}
-			else{
-				tX = tY;
-				tY = 0;
-			}
-			this.pieces[i].x = x-tX;
-			this.pieces[i].y = y-tY;
-		}
-		this.project();
-	}
-
-	flipB(){
-		this.remove();
-		for(var i = 0;i<this.pieces.length;i++){
-			let tX = this.x-this.pieces[i].x;
-			let tY = this.y-this.pieces[i].y;
-			if(tX !=0){
-				tY = -tX;
-				tX = 0;
-			}
-			else{
-				tX = -tY;
-				tY = 0;
-			}
-			this.pieces[i].x = this.x-tX;
-			this.pieces[i].y = this.y-tY;
-		}
-		this.project();
-	}
 }
+	
 
 class zPiece extends Piece{
 	constructor(myBoard,x,y){
@@ -351,10 +356,10 @@ function handleKeyDown(event) {
 	} else if (event.key === "ArrowDown") {
 		currentPiece.moveDown();
 	} else if (event.key === "x") {
-		currentPiece.flipA();
+		currentPiece.flip(1);
 	} else if (event.key === "z") {
-		currentPiece.flipB();
-	}
+		currentPiece.flip(-1);
+	} else if (event.key === "")
 
 	displayToCanvas(board); // Redraw the board after the move
 }
@@ -377,8 +382,8 @@ function gameLoop() {
 			}
 		}
 		// Spawn a new piece (you can randomize this later)
-		// let rand = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
-		let rand = 2;
+		let rand = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
+
 		switch(rand){
 			case(1):currentPiece = new oPiece(board, 4, 1);break;
 			case(2):currentPiece = new tPiece(board, 4, 1);break;
@@ -394,8 +399,4 @@ function gameLoop() {
 }
 
 // Run the loop every 500ms (or faster for more difficulty)
-setInterval(gameLoop, 500);
-
-
-
-							
+setInterval(gameLoop, 200);			
