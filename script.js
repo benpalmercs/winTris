@@ -278,6 +278,8 @@ class oPiece extends Piece{
 					new pieceTile(myBoard,x,y-1),
 					new pieceTile(myBoard,x+1,y-1)]
 	}
+	flip(i){
+	}
 }
 
 class tPiece extends Piece{
@@ -355,11 +357,14 @@ function handleKeyDown(event) {
 		currentPiece.moveRight(); // Move piece right
 	} else if (event.key === "ArrowDown") {
 		currentPiece.moveDown();
-	} else if (event.key === "x") {
+	} else if (event.key === "x" || event.key === "ArrowUp") {
 		currentPiece.flip(1);
 	} else if (event.key === "z") {
 		currentPiece.flip(-1);
-	} else if (event.key === "")
+	} else if (event.code === "Space"){
+		currentPiece.hardDrop();
+		console.log("big drop");
+	}
 
 	displayToCanvas(board); // Redraw the board after the move
 }
