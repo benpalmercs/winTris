@@ -28,10 +28,22 @@ let board = [[0,0,0,0,0,0,0,0,0,0],
 			[0,0,0,0,0,0,0,0,0,0]];
 
 let nextBox = [[0,0,0,0],
-							[0,0,0,0],
-							[0,0,0,0],
 							[0,0,0,0]]
 
+let nextBoxes = [[[0,0,0,0],
+							[0,0,0,0]],
+							
+							[[0,0,0,0],
+							[0,0,0,0]],
+							
+							[[0,0,0,0],
+							[0,0,0,0]],
+							
+							[[0,0,0,0],
+							[0,0,0,0]],
+							
+							[[0,0,0,0],
+							[0,0,0,0]]]
 
 
 
@@ -418,4 +430,4 @@ function gameLoop() {
 }
 
 // Run the loop every 500ms (or faster for more difficulty)
-setInterval(gameLoop, 200);	
+setInterval(gameLoop, 200);			
