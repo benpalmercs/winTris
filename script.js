@@ -3,8 +3,14 @@
 const cellSize = 30; // Size of each cell in pixels
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const nextCanvas = document.getElementById("nextBox");
-const nextCtx = nextCanvas.getContext("2d");
+
+const nextCanvases = [
+	document.getElementById("next1").getContext("2d"),
+	document.getElementById("next2").getContext("2d"),
+	document.getElementById("next3").getContext("2d"),
+	document.getElementById("next4").getContext("2d"),
+	document.getElementById("next5").getContext("2d")
+];
 
 let board = [[0,0,0,0,0,0,0,0,0,0],
 			[0,0,0,0,0,0,0,0,0,0],
@@ -27,53 +33,54 @@ let board = [[0,0,0,0,0,0,0,0,0,0],
 			[0,0,0,0,0,0,0,0,0,0],
 			[0,0,0,0,0,0,0,0,0,0]];
 
-let nextBox = [[0,0,0,0],
-							[0,0,0,0]]
+const colorBoard = Array.from({ length: 20 }, () => Array(20).fill(null));
 
-let nextBoxes = [[[0,0,0,0],
-							[0,0,0,0]],
-							
-							[[0,0,0,0],
-							[0,0,0,0]],
-							
-							[[0,0,0,0],
-							[0,0,0,0]],
-							
-							[[0,0,0,0],
-							[0,0,0,0]],
-							
-							[[0,0,0,0],
-							[0,0,0,0]]]
+let nextColorBoards = [];
+
+for (let i = 0; i < 5; i++) {
+  // 4x4 board filled with 0 (no color)
+  let colorBoard = Array.from({ length: 2 }, () =>
+    Array(4).fill(null)
+  );
+  nextColorBoards.push(colorBoard);
+}
+
+let nextBoxes = Array.from({ length: 5 }, () =>
+	Array.from({ length: 2 }, () => Array(4).fill(0))
+);
 
 
 
 
-function displayToCanvas(board,canvas) {
-	canvas.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawing
+function displayToCanvas(board, colorBoard, ctx) {
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+	const cellSize = 30; // or whatever size you're using
 
 	for (let y = 0; y < board.length; y++) {
 		for (let x = 0; x < board[y].length; x++) {
-			// Draw the background
-			canvas.fillStyle = board[y][x] === 1 ? "#007bff" : "#ffffff"; // Color for filled or empty
-			canvas.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-
-			// Draw grid lines (optional)
-			canvas.strokeStyle = "#000000"; // Grid line color
-			canvas.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+			if (board[y][x]) {
+				ctx.fillStyle = colorBoard[y][x] || "#999"; // fallback color
+				ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+				ctx.strokeStyle = "#000";
+				ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+			}
 		}
 	}
-
 }
+
 
 function lineClear(board,row){
 	let rowU = 20-row;
 	for(var y = rowU;y>0;y--){
 		for(var x = 0;x<board[rowU].length;x++){
 			board[y][x]=board[y-1][x];
+			colorBoard[y][x]=colorBoard[y-1][x];
 		}
 	}
 	for(var x = 0;x<board[0].length;x++){
 		board[0][x] = 0;
+		colorBoard[0][x] = null;
 	}
 }
 
@@ -88,17 +95,22 @@ function isCleared(board,row){
 }
 
 class pieceTile {
-	constructor(myBoard,x,y){
+	constructor(myBoard,x,y,colorBoard,color){
 		this.y = y;
 		this.x = x;
 		this.board = myBoard;
+		this.color = color;
+		this.colorBoard = colorBoard;
+		// this.color = color;
 		myBoard[this.y][this.x] = 1;
 	}
 	project(){
 		this.board[this.y][this.x] = 1;
+		this.colorBoard[this.y][this.x] = this.color;
 	}
 	remove(){
 		this.board[this.y][this.x] = 0;
+		this.colorBoard[this.y][this.x] = null;
 	}
 	moveLeft(){
 		this.x = this.x-1;
@@ -112,10 +124,12 @@ class pieceTile {
 }
 
 class Piece {
-	constructor(myBoard,x,y){
+	constructor(myBoard,x,y,colorBoard,color){
 		this.board = myBoard;
 		this.x = x;
 		this.y = y;
+		this.colorBoard = colorBoard;
+		this.color = color;
 	}
 	isInBlock(y,x){
 		for(var i = 0;i<this.pieces.length;i++){
@@ -262,77 +276,77 @@ class Piece {
 }
 
 class oPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x+1,y-1)]
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#e0e036");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color)]
 	}
 	flip(i){
 	}
 }
 
 class tPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#b036e0");
 		this.state = 0;
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x-1,y)];
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color)];
 	}
 }
 	
 class zPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x-1,y-1)];
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#e03e36");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y-1,this.colorBoard,this.color)];
 	}
 }
 
 class sPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y-1), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x-1,y)];
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#36e04f");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color)];
 	}
 }
 
 class lPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#e0a236");
 		this.state = 0;
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x-1,y), 
-					new pieceTile(myBoard,x+1,y),
-					new pieceTile(myBoard,x+1,y-1)];
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
+					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color)];
 	}
 }
 
 class jPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x-1,y), 
-					new pieceTile(myBoard,x+1,y),
-					new pieceTile(myBoard,x-1,y-1)];
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#5836e0");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y-1,this.colorBoard,this.color)];
 	}
 }
 
 class iPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x-1,y), 
-					new pieceTile(myBoard,x+1,y),
-					new pieceTile(myBoard,x+2,y)];
-	}
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#36e0de");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
+					new pieceTile(myBoard,x+2,y,this.colorBoard,this.color)];
+	}	
 }
 
 class nextQ{
@@ -353,51 +367,124 @@ class nextQ{
 	
 }
 
-function generatePiece(myBoard,x,y,rand){
+function generatePiece(myBoard,x,y,colorBoard,rand){
 
 		switch(rand){
-			case(1):return new oPiece(myBoard, x, y);break;
-			case(2):return new tPiece(myBoard, x, y);break;
-			case(3):return new sPiece(myBoard, x, y);break;
-			case(4):return new zPiece(myBoard, x, y);break;
-			case(5):return new lPiece(myBoard, x, y);break;
-			case(6):return new jPiece(myBoard, x, y);break;
-			case(7):return new iPiece(myBoard, x, y);break;
+			case(1):return new oPiece(myBoard, x, y, colorBoard);break;
+			case(2):return new tPiece(myBoard, x, y, colorBoard);break;
+			case(3):return new sPiece(myBoard, x, y, colorBoard);break;
+			case(4):return new zPiece(myBoard, x, y, colorBoard);break;
+			case(5):return new lPiece(myBoard, x, y, colorBoard);break;
+			case(6):return new jPiece(myBoard, x, y, colorBoard);break;
+			case(7):return new iPiece(myBoard, x, y, colorBoard);break;
 		}
+}
+
+function renderNextPieces() {
+	for (let i = 0; i < 5; i++) {
+		// Clear each board and color board
+		for (let y = 0; y < 2; y++) {
+			for (let x = 0; x < 4; x++) {
+				nextBoxes[i][y][x] = 0;
+				nextColorBoards[i][y][x] = null;
+			}
+		}
+
+		// Create new piece on its board (centered)
+		generatePiece(nextBoxes[i], 1, 1, nextColorBoards[i], queue.next[i]);
+
+		// Display to canvas
+		displayToCanvas(nextBoxes[i], nextColorBoards[i], nextCanvases[i]);
+	}
+}
+
+
+function moveKey(key) {
+    if (key === "ArrowLeft") {
+        currentPiece.moveLeft();
+    } else if (key === "ArrowRight") {
+        currentPiece.moveRight();
+    } else if (key === "ArrowDown") {
+        currentPiece.moveDown();
+    }
+
+    displayToCanvas(board, colorBoard, ctx);
 }
 
 
 
-displayToCanvas(board,ctx);
+displayToCanvas(board,colorBoard,ctx);
+
 
 // Creating baord and piece
 let queue = new nextQ();
 queue.populate();
-let currentPiece = generatePiece(board,4,1,queue.next[0])
-let nextPiece = generatePiece(nextBox,1,1,queue.next[1]);
+
+let currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
+queue.increment();
+renderNextPieces();
+
+// let nextPiece = generatePiece(nextBox,1,1,queue.next[1]);
+
+// DAS/ARR Stuff
+let keyStates = {
+    ArrowLeft: false,
+    ArrowRight: false,
+    ArrowDown: false,
+};
+
+let dasDelay = 150; // milliseconds
+let arrInterval = 50;
+
+let dasTimeouts = {};
+let arrIntervals = {};
+
 
 // Handling inputs for pieces
 function handleKeyDown(event) {
-	if (event.key === "ArrowLeft") {
-		currentPiece.moveLeft(); // Move piece left
-	} else if (event.key === "ArrowRight") {
-		currentPiece.moveRight(); // Move piece right
-	} else if (event.key === "ArrowDown") {
-		currentPiece.moveDown();
-	} else if (event.key === "x" || event.key === "ArrowUp") {
-		currentPiece.flip(1);
-	} else if (event.key === "z") {
-		currentPiece.flip(-1);
-	} else if (event.code === "Space"){
-		currentPiece.hardDrop();
-		console.log("big drop");
-	}
+    const key = event.key;
 
-	displayToCanvas(board,ctx); // Redraw the board after the move
+    if (!keyStates[key]) {
+        keyStates[key] = true;
+
+        if (key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowDown") {
+            moveKey(key); // Do one immediate move
+            dasTimeouts[key] = setTimeout(() => {
+                arrIntervals[key] = setInterval(() => moveKey(key), arrInterval);
+            }, dasDelay);
+        }
+    }
+
+    if (key === "x" || key === "ArrowUp") {
+        currentPiece.flip(1);
+    } else if (key === "z") {
+        currentPiece.flip(-1);
+    } else if (event.code === "Space") {
+        currentPiece.hardDrop();
+    }
+
+    displayToCanvas(board, colorBoard,ctx);
 }
+
+function handleKeyUp(event) {
+    const key = event.key;
+    keyStates[key] = false;
+
+    if (dasTimeouts[key]) {
+        clearTimeout(dasTimeouts[key]);
+        dasTimeouts[key] = null;
+    }
+
+    if (arrIntervals[key]) {
+        clearInterval(arrIntervals[key]);
+        arrIntervals[key] = null;
+    }
+}
+
 
 // Add event listener for keydown
 window.addEventListener("keydown", handleKeyDown);
+window.addEventListener("keyup", handleKeyUp);
 
 
 // Game looop
@@ -412,22 +499,18 @@ function gameLoop() {
 				lineClear(board, 20 - row);
 			}
 		}
-		if(currentPiece.y === 1){
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			return;
-		}
+		currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
 		queue.increment();
-		currentPiece = generatePiece(board,4,1,queue.next[0]);
-		nextPiece.remove();
-		nextPiece = generatePiece(nextBox,1,1,queue.next[1]);
-		nextBox.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+		renderNextPieces();
+	
+		
 		
 		
 		
 	}
-	displayToCanvas(board,ctx);
-	displayToCanvas(nextBox,nextCtx);
+	displayToCanvas(board,colorBoard,ctx);
+	
 }
 
 // Run the loop every 500ms (or faster for more difficulty)
-setInterval(gameLoop, 200);			
+setInterval(gameLoop, 500);			

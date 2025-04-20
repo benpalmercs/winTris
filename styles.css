@@ -1,3 +1,12 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #9b8fd4; /* Optional dark background */
+  }
+
 #gameCanvas {
             border: 2px solid black;
             margin: 20px;
@@ -8,13 +17,18 @@
         }
 				
 .gamenext {
-	display:grid;
-	grid-template-rows: 300px 120px;
-	grid-template-columns: 600px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
 }
 
-.nextBoxes{
-	display:grid;
-	grid-template-columns: 90px 90px 90px 90px 90px;
-	grid-template-rows: 120px
+.nextBoxes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.container {
+    justify-content:center;
 }
