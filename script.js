@@ -60,7 +60,7 @@ function displayToCanvas(board, colorBoard, ctx) {
 	for (let y = 0; y < board.length; y++) {
 		for (let x = 0; x < board[y].length; x++) {
 			if (board[y][x]) {
-				ctx.fillStyle = colorBoard[y][x] || "#999"; // fallback color
+				ctx.fillStyle = colorBoard?.[y]?.[x] ?? "#999";
 				ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
 				ctx.strokeStyle = "#000";
 				ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
@@ -101,8 +101,8 @@ class pieceTile {
 		this.board = myBoard;
 		this.color = color;
 		this.colorBoard = colorBoard;
-		// this.color = color;
 		myBoard[this.y][this.x] = 1;
+		colorBoard[this.y][this.x] = this.color;
 	}
 	project(){
 		this.board[this.y][this.x] = 1;
@@ -130,6 +130,9 @@ class Piece {
 		this.y = y;
 		this.colorBoard = colorBoard;
 		this.color = color;
+		this.pieces = [];
+		this.locked = false;
+		this.project();
 	}
 	isInBlock(y,x){
 		for(var i = 0;i<this.pieces.length;i++){
@@ -192,7 +195,7 @@ class Piece {
 }
 	
 	moveLeft(){
-		if(this.canMoveLeft()){ 
+		if(this.canMoveLeft() && !this.locked){ 
 			this.x -=1;
 			this.remove();
 			for(var i = 0;i<this.pieces.length;i++){
@@ -206,7 +209,7 @@ class Piece {
 	}
 	
 	moveRight(){
-		if(this.canMoveRight()){
+		if(this.canMoveRight() && !this.locked){
 			this.x +=1;
 			this.remove();
 			for(var i = 0;i<this.pieces.length;i++){
@@ -236,7 +239,8 @@ class Piece {
 	hardDrop(){
 		while(this.canMoveDown()){
 			this.moveDown();
-		}
+		} 
+		this.locked = true;
 	}
 	
 	canFlip(d){
@@ -256,7 +260,7 @@ class Piece {
 	}
 	
 	flip(d){
-		if(this.canFlip(d)){
+		if(this.canFlip(d) && !this.locked){
 			for(var i = 0;i<this.pieces.length;i++){
 				this.remove();
 				let tX = this.x-this.pieces[i].x;
@@ -380,6 +384,7 @@ function generatePiece(myBoard,x,y,colorBoard,rand){
 		}
 }
 
+let nextPieces = [null,null,null,null,null];
 function renderNextPieces() {
 	for (let i = 0; i < 5; i++) {
 		// Clear each board and color board
@@ -391,7 +396,7 @@ function renderNextPieces() {
 		}
 
 		// Create new piece on its board (centered)
-		generatePiece(nextBoxes[i], 1, 1, nextColorBoards[i], queue.next[i]);
+		nextPieces[i]=generatePiece(nextBoxes[i], 1, 1, nextColorBoards[i], queue.next[i]);
 
 		// Display to canvas
 		displayToCanvas(nextBoxes[i], nextColorBoards[i], nextCanvases[i]);
@@ -433,8 +438,8 @@ let keyStates = {
     ArrowDown: false,
 };
 
-let dasDelay = 150; // milliseconds
-let arrInterval = 50;
+let dasDelay = 100; // milliseconds
+let arrInterval = 20;
 
 let dasTimeouts = {};
 let arrIntervals = {};
@@ -493,7 +498,6 @@ function gameLoop() {
 	if (currentPiece.canMoveDown()) {
 		currentPiece.moveDown();
 	} else {
-
 		for (let row = 0; row < board.length; row++) {
 			if (isCleared(board, 20 - row)) {
 				lineClear(board, 20 - row);
@@ -501,12 +505,7 @@ function gameLoop() {
 		}
 		currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
 		queue.increment();
-		renderNextPieces();
-	
-		
-		
-		
-		
+		renderNextPieces();	
 	}
 	displayToCanvas(board,colorBoard,ctx);
 	
