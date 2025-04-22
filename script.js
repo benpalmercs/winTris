@@ -12,42 +12,29 @@ const nextCanvases = [
 	document.getElementById("next5").getContext("2d")
 ];
 
-let board = [[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0]];
+const holdCanvas = document.getElementById("holdBox").getContex("2d");
 
-const colorBoard = Array.from({ length: 20 }, () => Array(20).fill(null));
+let board = Array.from({ length: 20 }, () => Array(10).fill(0));
+
+const colorBoard = Array.from({ length: 20 }, () => Array(10).fill(null));
 
 let nextColorBoards = [];
 
 for (let i = 0; i < 5; i++) {
   // 4x4 board filled with 0 (no color)
-  let colorBoard = Array.from({ length: 2 }, () =>
+  let colorB = Array.from({ length: 2 }, () =>
     Array(4).fill(null)
   );
-  nextColorBoards.push(colorBoard);
+  nextColorBoards.push(colorB);
 }
 
 let nextBoxes = Array.from({ length: 5 }, () =>
 	Array.from({ length: 2 }, () => Array(4).fill(0))
 );
+
+let holdBox = Array.from({length: 2}, () => Array(4).fill(0));
+let holdColorBoard = Array.from({length: 2}, () => Array(4).fill(null));
+
 
 
 
@@ -132,6 +119,7 @@ class Piece {
 		this.color = color;
 		this.pieces = [];
 		this.locked = false;
+		this.id = 0;
 		this.project();
 	}
 	isInBlock(y,x){
@@ -285,7 +273,9 @@ class oPiece extends Piece{
 		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
-					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color)]
+					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color)];
+		this.id = 1;
+		
 	}
 	flip(i){
 	}
@@ -299,6 +289,7 @@ class tPiece extends Piece{
 					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
 					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color)];
+		this.id=2;
 	}
 }
 	
@@ -309,6 +300,7 @@ class zPiece extends Piece{
 					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
 					new pieceTile(myBoard,x-1,y-1,this.colorBoard,this.color)];
+		this.id = 4;
 	}
 }
 
@@ -319,6 +311,7 @@ class sPiece extends Piece{
 					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
 					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color)];
+		this.id = 3;
 	}
 }
 
@@ -330,6 +323,7 @@ class lPiece extends Piece{
 					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
 					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color)];
+		this.id = 5;
 	}
 }
 
@@ -340,16 +334,20 @@ class jPiece extends Piece{
 					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
 					new pieceTile(myBoard,x-1,y-1,this.colorBoard,this.color)];
+		this.id = 6;
 	}
 }
 
 class iPiece extends Piece{
 	constructor(myBoard,x,y,colorBoard){
 		super(myBoard,x,y,colorBoard,"#36e0de");
+		this.x += 0.5;
+		this.y += 0.5;
 		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
 					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
 					new pieceTile(myBoard,x+2,y,this.colorBoard,this.color)];
+		this.id = 7;
 	}	
 }
 
@@ -394,15 +392,18 @@ function renderNextPieces() {
 				nextColorBoards[i][y][x] = null;
 			}
 		}
-
 		// Create new piece on its board (centered)
-		nextPieces[i]=generatePiece(nextBoxes[i], 1, 1, nextColorBoards[i], queue.next[i]);
-
+		generatePiece(nextBoxes[i], 1, 1, nextColorBoards[i], queue.next[i]);
 		// Display to canvas
 		displayToCanvas(nextBoxes[i], nextColorBoards[i], nextCanvases[i]);
 	}
 }
 
+let heldPiece = null;
+function holdPiece(piece){
+	heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard,piece.id);
+	displayToCanvas(holdBox,holdColorBoard,holdCanvas);
+}
 
 function moveKey(key) {
     if (key === "ArrowLeft") {
@@ -418,6 +419,8 @@ function moveKey(key) {
 
 
 
+
+
 displayToCanvas(board,colorBoard,ctx);
 
 
@@ -428,8 +431,6 @@ queue.populate();
 let currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
 queue.increment();
 renderNextPieces();
-
-// let nextPiece = generatePiece(nextBox,1,1,queue.next[1]);
 
 // DAS/ARR Stuff
 let keyStates = {
@@ -466,7 +467,9 @@ function handleKeyDown(event) {
         currentPiece.flip(-1);
     } else if (event.code === "Space") {
         currentPiece.hardDrop();
-    }
+    } else if (event.code ==="c") {
+		holdPiece(currentPiece);
+	}
 
     displayToCanvas(board, colorBoard,ctx);
 }
@@ -491,25 +494,37 @@ function handleKeyUp(event) {
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
 
+let dropDelay = 48;
+let topOut = false;
+let gameCount = 1;
+
 
 // Game looop
 function gameLoop() {
-
-	if (currentPiece.canMoveDown()) {
-		currentPiece.moveDown();
-	} else {
-		for (let row = 0; row < board.length; row++) {
-			if (isCleared(board, 20 - row)) {
-				lineClear(board, 20 - row);
+	if(!topOut){
+		if (currentPiece.canMoveDown()) {
+			if(gameCount%dropDelay === 0){
+				currentPiece.moveDown();
 			}
+		} 
+		else {
+			for (let row = 0; row < board.length; row++) {
+				if (isCleared(board, 20 - row)) {
+					lineClear(board, 20 - row);
+				}
+			}
+			if(currentPiece.y === 1){
+				topOut = true;
+			}
+			currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
+			gameCount = 1;
+			queue.increment();
+			renderNextPieces();	
 		}
-		currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
-		queue.increment();
-		renderNextPieces();	
+		gameCount++;
 	}
 	displayToCanvas(board,colorBoard,ctx);
 	
 }
-
-// Run the loop every 500ms (or faster for more difficulty)
-setInterval(gameLoop, 500);			
+// Running game ata bout 60 fps
+setInterval(gameLoop, 17);			
