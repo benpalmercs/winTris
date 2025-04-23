@@ -12,7 +12,7 @@ const nextCanvases = [
 	document.getElementById("next5").getContext("2d")
 ];
 
-const holdCanvas = document.getElementById("holdBox").getContex("2d");
+const holdCanvas = document.getElementById("holdBox").getContext("2d");
 
 let board = Array.from({ length: 20 }, () => Array(10).fill(0));
 
@@ -400,8 +400,19 @@ function renderNextPieces() {
 }
 
 let heldPiece = null;
-function holdPiece(piece){
-	heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard,piece.id);
+function holdPiece(currentPiece,heldPiece){
+	for (let y = 0; y < 2; y++) {
+			for (let x = 0; x < 4; x++) {
+				holdBox[y][x] = 0;
+				holdColorBoard[y][x] = null;
+			}
+		}
+	let temp = currentPiece.id
+	heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard,currentPiece.id);
+	currentPiece.remove();
+	currentPiece.x = 4;
+	currentPiece.y = 1;
+	currentPiece = generatePiece(board,4,1,colorBoard,temp);
 	displayToCanvas(holdBox,holdColorBoard,holdCanvas);
 }
 
@@ -467,9 +478,10 @@ function handleKeyDown(event) {
         currentPiece.flip(-1);
     } else if (event.code === "Space") {
         currentPiece.hardDrop();
-    } else if (event.code ==="c") {
-		holdPiece(currentPiece);
-	}
+    } else if (key ==="c") {
+			holdPiece(currentPiece,heldPiece);
+			
+		}
 
     displayToCanvas(board, colorBoard,ctx);
 }
@@ -497,6 +509,8 @@ window.addEventListener("keyup", handleKeyUp);
 let dropDelay = 48;
 let topOut = false;
 let gameCount = 1;
+let lockDelay = 60;
+let lockCount = 0;
 
 
 // Game looop
@@ -508,18 +522,25 @@ function gameLoop() {
 			}
 		} 
 		else {
-			for (let row = 0; row < board.length; row++) {
-				if (isCleared(board, 20 - row)) {
-					lineClear(board, 20 - row);
+			if(currentPiece.locked){
+				for (let row = 0; row < board.length; row++) {
+					if (isCleared(board, 20 - row)) {
+						lineClear(board, 20 - row);
+					}
 				}
+				if(currentPiece.y === 1){
+					topOut = true;
+				}
+				currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
+				gameCount = 1;
+				queue.increment();
+				renderNextPieces();
+				lockCount = 0;
 			}
-			if(currentPiece.y === 1){
-				topOut = true;
+			lockCount++;
+			if(lockCount === lockDelay){
+				currentPiece.locked = true;
 			}
-			currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
-			gameCount = 1;
-			queue.increment();
-			renderNextPieces();	
 		}
 		gameCount++;
 	}
