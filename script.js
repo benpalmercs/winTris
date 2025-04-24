@@ -399,22 +399,39 @@ function renderNextPieces() {
 	}
 }
 
+let holdUsed = false;
 let heldPiece = null;
-function holdPiece(currentPiece,heldPiece){
+
+function holdPiece() {
+	if (holdUsed) return; // Prevent multiple holds in one turn
+
+	// Clear hold box
 	for (let y = 0; y < 2; y++) {
-			for (let x = 0; x < 4; x++) {
-				holdBox[y][x] = 0;
-				holdColorBoard[y][x] = null;
-			}
+		for (let x = 0; x < 4; x++) {
+			holdBox[y][x] = 0;
+			holdColorBoard[y][x] = null;
 		}
-	let temp = currentPiece.id
-	heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard,currentPiece.id);
-	currentPiece.remove();
-	currentPiece.x = 4;
-	currentPiece.y = 1;
-	currentPiece = generatePiece(board,4,1,colorBoard,temp);
-	displayToCanvas(holdBox,holdColorBoard,holdCanvas);
+	}
+
+	currentPiece.remove(); // Remove from main board
+
+	if (!heldPiece) {
+		// First time holding
+		heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard, currentPiece.id);
+		currentPiece = generatePiece(board, 4, 1, colorBoard, queue.next[0]);
+		queue.increment();
+		renderNextPieces();
+	} else {
+		let tempId = currentPiece.id;
+		currentPiece = generatePiece(board, 4, 1, colorBoard, heldPiece.id);
+		heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard, tempId);
+	}
+
+	holdUsed = true;
+
+	displayToCanvas(holdBox, holdColorBoard, holdCanvas);
 }
+
 
 function moveKey(key) {
     if (key === "ArrowLeft") {
@@ -479,7 +496,7 @@ function handleKeyDown(event) {
     } else if (event.code === "Space") {
         currentPiece.hardDrop();
     } else if (key ==="c") {
-			holdPiece(currentPiece,heldPiece);
+			holdPiece();
 			
 		}
 
@@ -532,6 +549,7 @@ function gameLoop() {
 					topOut = true;
 				}
 				currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
+				holdUsed = false;
 				gameCount = 1;
 				queue.increment();
 				renderNextPieces();
