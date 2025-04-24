@@ -1,9 +1,7 @@
 
-
-const cellSize = 30; // Size of each cell in pixels
+//Canvases
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
 const nextCanvases = [
 	document.getElementById("next1").getContext("2d"),
 	document.getElementById("next2").getContext("2d"),
@@ -11,15 +9,23 @@ const nextCanvases = [
 	document.getElementById("next4").getContext("2d"),
 	document.getElementById("next5").getContext("2d")
 ];
-
 const holdCanvas = document.getElementById("holdBox").getContext("2d");
 
-let board = Array.from({ length: 20 }, () => Array(10).fill(0));
+//Text
+const lineCountDisplay = document.getElementById("lineCount");
+const scoreDisplay = document.getElementById("score");
+const levelDisplay = document.getElementById("level");
 
+
+//Values
+let lines = 0;
+let level = 0;
+let score = 0;
+let levelSpeeds = new Map([[0, 48],[1, 43],[2, 38],[3, 33],[4, 28],[5, 23],[6, 18],[7, 13],[8, 8],[9, 6],[10,5],[13,4][16,3][19,2][29,1]]);
+
+//Colorboards
 const colorBoard = Array.from({ length: 20 }, () => Array(10).fill(null));
-
 let nextColorBoards = [];
-
 for (let i = 0; i < 5; i++) {
   // 4x4 board filled with 0 (no color)
   let colorB = Array.from({ length: 2 }, () =>
@@ -27,18 +33,22 @@ for (let i = 0; i < 5; i++) {
   );
   nextColorBoards.push(colorB);
 }
+let holdColorBoard = Array.from({length: 2}, () => Array(4).fill(null));
 
+//Board Arrays
+let board = Array.from({ length: 20 }, () => Array(10).fill(0));
 let nextBoxes = Array.from({ length: 5 }, () =>
 	Array.from({ length: 2 }, () => Array(4).fill(0))
 );
-
 let holdBox = Array.from({length: 2}, () => Array(4).fill(0));
-let holdColorBoard = Array.from({length: 2}, () => Array(4).fill(null));
+
+//Miscallaneous Standard Variables
+let holdUsed = false;
+let heldPiece = null;
+let nextPieces = [null,null,null,null,null];
 
 
-
-
-
+//Displaying to Canvases
 function displayToCanvas(board, colorBoard, ctx) {
 	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -69,6 +79,8 @@ function lineClear(board,row){
 		board[0][x] = 0;
 		colorBoard[0][x] = null;
 	}
+	lines++;
+	lineCountDisplay.textContent = "Lines: " +lines;
 }
 
 function isCleared(board,row){
@@ -81,6 +93,7 @@ function isCleared(board,row){
 	return true;
 }
 
+//Code for Individual tiles on boards
 class pieceTile {
 	constructor(myBoard,x,y,colorBoard,color){
 		this.y = y;
@@ -110,6 +123,7 @@ class pieceTile {
 	}
 }
 
+//Piece class holds tiles and transforms them
 class Piece {
 	constructor(myBoard,x,y,colorBoard,color){
 		this.board = myBoard;
@@ -267,6 +281,7 @@ class Piece {
 	
 }
 
+//Pieces each with unique organization of tiles
 class oPiece extends Piece{
 	constructor(myBoard,x,y,colorBoard){
 		super(myBoard,x,y,colorBoard,"#e0e036");
@@ -351,6 +366,7 @@ class iPiece extends Piece{
 	}	
 }
 
+//Holds next pieces
 class nextQ{
 	constructor(){
 		this.next = [0,0,0,0,0,0];
@@ -369,6 +385,7 @@ class nextQ{
 	
 }
 
+//Generates a piece based on a number 1-7
 function generatePiece(myBoard,x,y,colorBoard,rand){
 
 		switch(rand){
@@ -382,7 +399,6 @@ function generatePiece(myBoard,x,y,colorBoard,rand){
 		}
 }
 
-let nextPieces = [null,null,null,null,null];
 function renderNextPieces() {
 	for (let i = 0; i < 5; i++) {
 		// Clear each board and color board
@@ -399,8 +415,6 @@ function renderNextPieces() {
 	}
 }
 
-let holdUsed = false;
-let heldPiece = null;
 
 function holdPiece() {
 	if (holdUsed) return; // Prevent multiple holds in one turn
@@ -452,7 +466,7 @@ function moveKey(key) {
 displayToCanvas(board,colorBoard,ctx);
 
 
-// Creating baord and piece
+// Creating board and piece
 let queue = new nextQ();
 queue.populate();
 
@@ -540,14 +554,29 @@ function gameLoop() {
 		} 
 		else {
 			if(currentPiece.locked){
+				//Line Clear Check
+				let linesOnClear = 0;
 				for (let row = 0; row < board.length; row++) {
 					if (isCleared(board, 20 - row)) {
 						lineClear(board, 20 - row);
+						linesOnClear++;
 					}
 				}
+				switch(linesOnClear){
+					case(0):score+=0;break;
+					case(1):score+=(40*(level+1));break;
+					case(2):score+=(100*(level+1));break;
+					case(3):score+=(300*(level+1));break;
+					case(4):score+=(1200*(level+1));break;
+				}
+				level = Math.floor(lines/10);
+				scoreDisplay.textContent = "Score: " +score;
+				levelDisplay.textContent = "Level: " +level;
+				//Check for top out
 				if(currentPiece.y === 1){
 					topOut = true;
 				}
+				//Create new Piece
 				currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
 				holdUsed = false;
 				gameCount = 1;
