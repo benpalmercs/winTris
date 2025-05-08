@@ -4,16 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tetris Game</title>
-    <style>
-        /* Style the canvas */
-        #gameCanvas {
-            border: 2px solid black;
-            margin: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <canvas id="gameCanvas" width="300" height="600"></canvas>
+	
+		<div class = "gamenext">
+			<div class = "nextBoxes">
+				<canvas id="holdBox" class = "nextBox" width="120" height="60"></canvas>
+				<b id = "score" class = "gameText">Score: 0</b>
+				<b id = "lineCount" class = "gameText">Lines: 0</b>
+				<b id = "level" class = "gameText">Level: 0</b>
+
+			</div>
+			<canvas id="gameCanvas" width="300" height="600"></canvas>
+			<div class = "nextBoxes">
+				<canvas id="next1" class= "nextBox" width="120" height="60"></canvas>
+				<canvas id="next2" class= "nextBox" width="120" height="60"></canvas>
+				<canvas id="next3" class= "nextBox" width="120" height="60"></canvas>
+				<canvas id="next4" class= "nextBox" width="120" height="60"></canvas>
+				<canvas id="next5" class= "nextBox" width="120" height="60"></canvas>
+			</div>
+		</div>
 
     <script src = "script.js">
         

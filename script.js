@@ -1,88 +1,86 @@
 
-const cellSize = 30; // Size of each cell in pixels
+//Canvases
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const nextCanvases = [
+	document.getElementById("next1").getContext("2d"),
+	document.getElementById("next2").getContext("2d"),
+	document.getElementById("next3").getContext("2d"),
+	document.getElementById("next4").getContext("2d"),
+	document.getElementById("next5").getContext("2d")
+];
+const holdCanvas = document.getElementById("holdBox").getContext("2d");
 
-let board = [[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0],
-			[0,0,0,0,0,0,0,0,0,0]];
+//Text
+const lineCountDisplay = document.getElementById("lineCount");
+const scoreDisplay = document.getElementById("score");
+const levelDisplay = document.getElementById("level");
 
-function displayBoard(board){
-	let string = "";
-	for(var y = 0;y<board.length;y++){
-		let string = "";
-		for(var x = 0;x<board[y].length;x++){
-			string += board[y][x];
-			string+= "  ";
-		}
-		console.log(string);
-	}
-	console.log(" ");
+
+//Values
+let lines = 200;
+let level = 0;
+let score = 0;
+// let levelSpeeds = new Map([[0, 48],[1, 43],[2, 38],[3, 33],[4, 28],[5, 23],[6, 18],[7, 13],[8, 8],[9, 6],[10,5],[13,4][16,3][19,2][29,1]]);
+
+//Colorboards
+const colorBoard = Array.from({ length: 20 }, () => Array(10).fill(null));
+let nextColorBoards = [];
+for (let i = 0; i < 5; i++) {
+  // 4x4 board filled with 0 (no color)
+  let colorB = Array.from({ length: 2 }, () =>
+    Array(4).fill(null)
+  );
+  nextColorBoards.push(colorB);
 }
+let holdColorBoard = Array.from({length: 2}, () => Array(4).fill(null));
 
-function fancyDisplay(board) {
-	const filled = "■"; // You could also try "⬜" or "🟦" for more color
-	const empty = " ";
-	const topBorder = "┌" + "──".repeat(board[0].length) + "┐";
-	const bottomBorder = "└" + "──".repeat(board[0].length) + "┘";
-	
-	console.log(topBorder);
-	for (let y = 0; y < board.length; y++) {
-		let rowStr = "│";
-		for (let x = 0; x < board[y].length; x++) {
-			rowStr += board[y][x] ? filled + " " : empty + " ";
-		}
-		rowStr += "│";
-		console.log(rowStr);
-	}
-	console.log(bottomBorder);
-	console.log("\n");
-}
+//Board Arrays
+let board = Array.from({ length: 20 }, () => Array(10).fill(0));
+let nextBoxes = Array.from({ length: 5 }, () =>
+	Array.from({ length: 2 }, () => Array(4).fill(0))
+);
+let holdBox = Array.from({length: 2}, () => Array(4).fill(0));
 
-function displayToCanvas(board) {
-	ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawing
+//Miscallaneous Standard Variables
+let holdUsed = false;
+let heldPiece = null;
+let nextPieces = [null,null,null,null,null];
+
+
+//Displaying to Canvases
+function displayToCanvas(board, colorBoard, ctx) {
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+	const cellSize = 30; // or whatever size you're using
 
 	for (let y = 0; y < board.length; y++) {
 		for (let x = 0; x < board[y].length; x++) {
-			// Draw the background
-			ctx.fillStyle = board[y][x] === 1 ? "#007bff" : "#ffffff"; // Color for filled or empty
-			ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-
-			// Draw grid lines (optional)
-			ctx.strokeStyle = "#000000"; // Grid line color
-			ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+			if (board[y][x]) {
+				ctx.fillStyle = colorBoard?.[y]?.[x] ?? "#999";
+				ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+				ctx.strokeStyle = "#000";
+				ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+			}
 		}
 	}
-
 }
+
 
 function lineClear(board,row){
 	let rowU = 20-row;
 	for(var y = rowU;y>0;y--){
 		for(var x = 0;x<board[rowU].length;x++){
 			board[y][x]=board[y-1][x];
+			colorBoard[y][x]=colorBoard[y-1][x];
 		}
 	}
 	for(var x = 0;x<board[0].length;x++){
 		board[0][x] = 0;
+		colorBoard[0][x] = null;
 	}
+	lines++;
+	lineCountDisplay.textContent = "Lines: " +lines;
 }
 
 function isCleared(board,row){
@@ -95,18 +93,24 @@ function isCleared(board,row){
 	return true;
 }
 
+//Code for Individual tiles on boards
 class pieceTile {
-	constructor(myBoard,x,y){
+	constructor(myBoard,x,y,colorBoard,color){
 		this.y = y;
 		this.x = x;
 		this.board = myBoard;
+		this.color = color;
+		this.colorBoard = colorBoard;
 		myBoard[this.y][this.x] = 1;
+		colorBoard[this.y][this.x] = this.color;
 	}
 	project(){
 		this.board[this.y][this.x] = 1;
+		this.colorBoard[this.y][this.x] = this.color;
 	}
 	remove(){
 		this.board[this.y][this.x] = 0;
+		this.colorBoard[this.y][this.x] = null;
 	}
 	moveLeft(){
 		this.x = this.x-1;
@@ -119,11 +123,18 @@ class pieceTile {
 	}
 }
 
+//Piece class holds tiles and transforms them
 class Piece {
-	constructor(myBoard,x,y){
+	constructor(myBoard,x,y,colorBoard,color){
 		this.board = myBoard;
 		this.x = x;
 		this.y = y;
+		this.colorBoard = colorBoard;
+		this.color = color;
+		this.pieces = [];
+		this.locked = false;
+		this.id = 0;
+		this.project();
 	}
 	isInBlock(y,x){
 		for(var i = 0;i<this.pieces.length;i++){
@@ -186,7 +197,7 @@ class Piece {
 }
 	
 	moveLeft(){
-		if(this.canMoveLeft()){ 
+		if(this.canMoveLeft() && !this.locked){ 
 			this.x -=1;
 			this.remove();
 			for(var i = 0;i<this.pieces.length;i++){
@@ -200,7 +211,7 @@ class Piece {
 	}
 	
 	moveRight(){
-		if(this.canMoveRight()){
+		if(this.canMoveRight() && !this.locked){
 			this.x +=1;
 			this.remove();
 			for(var i = 0;i<this.pieces.length;i++){
@@ -226,176 +237,367 @@ class Piece {
 			console.log("bump");
 		}
 	}
+	
+	hardDrop(){
+		while(this.canMoveDown()){
+			this.moveDown();
+		} 
+		this.locked = true;
+	}
+	
+	canFlip(d){
+		for(var i = 0;i<this.pieces.length;i++){
+				let tX = this.x-this.pieces[i].x;
+				let tY = this.y-this.pieces[i].y;
+				let newX,newY = 0;
+				newX= (tX*0)+tY*d;
+				newY = (tX*-d)+tY*0;
+				if(this.board[this.y+newY][this.x+newX]===undefined || 
+					(this.board[this.y+newY][this.x+newX] === 1 && 
+					!this.isInBlock(this.y+newY,this.x+newX))){
+					return false;
+				}
+		}
+		return true;
+	}
+	
+	flip(d){
+		if(this.canFlip(d) && !this.locked){
+			for(var i = 0;i<this.pieces.length;i++){
+				this.remove();
+				let tX = this.x-this.pieces[i].x;
+				let tY = this.y-this.pieces[i].y;
+				let newX,newY = 0;
+				newX= (tX*0)+(tY*d);
+				newY = (tX*-d)+(tY*0);
+				this.pieces[i].x = this.x+newX;
+				this.pieces[i].y = this.y+newY;
+				this.project();
+			}
+		}
+		else{console.log("bump");}
+	}
+	
+	
 }
 
+//Pieces each with unique organization of tiles
 class oPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x+1,y-1)]
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#e0e036");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color)];
+		this.id = 1;
+		
+	}
+	flip(i){
 	}
 }
 
 class tPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#b036e0");
 		this.state = 0;
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x-1,y)];
-	}
-	
-	flipA(){
-		this.remove();
-		for(var i = 0;i<this.pieces.length;i++){
-			let tX = this.x-this.pieces[i].x;
-			let tY = this.y-this.pieces[i].y;
-			if(tX !=0){
-				tY = tX;
-				tX = 0;
-			}
-			else{
-				tX = tY;
-				tY = 0;
-			}
-			this.pieces[i].x = x-tX;
-			this.pieces[i].y = y-tY;
-		}
-		this.project();
-	}
-
-	flipB(){
-		this.remove();
-		for(var i = 0;i<this.pieces.length;i++){
-			let tX = this.x-this.pieces[i].x;
-			let tY = this.y-this.pieces[i].y;
-			if(tX !=0){
-				tY = -tX;
-				tX = 0;
-			}
-			else{
-				tX = -tY;
-				tY = 0;
-			}
-			this.pieces[i].x = this.x-tX;
-			this.pieces[i].y = this.y-tY;
-		}
-		this.project();
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color)];
+		this.id=2;
 	}
 }
-
+	
 class zPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x-1,y-1)];
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#e03e36");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y-1,this.colorBoard,this.color)];
+		this.id = 4;
 	}
 }
 
 class sPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x+1,y-1), 
-					new pieceTile(myBoard,x,y-1),
-					new pieceTile(myBoard,x-1,y)];
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#36e04f");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x,y-1,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color)];
+		this.id = 3;
 	}
 }
 
 class lPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#e0a236");
 		this.state = 0;
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x-1,y), 
-					new pieceTile(myBoard,x+1,y),
-					new pieceTile(myBoard,x+1,y-1)];
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
+					new pieceTile(myBoard,x+1,y-1,this.colorBoard,this.color)];
+		this.id = 5;
 	}
 }
 
 class jPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x-1,y), 
-					new pieceTile(myBoard,x+1,y),
-					new pieceTile(myBoard,x-1,y-1)];
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#5836e0");
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
+					new pieceTile(myBoard,x-1,y-1,this.colorBoard,this.color)];
+		this.id = 6;
 	}
 }
 
 class iPiece extends Piece{
-	constructor(myBoard,x,y){
-		super(myBoard,x,y);
-		this.pieces = [new pieceTile(myBoard,x,y), 
-					new pieceTile(myBoard,x-1,y), 
-					new pieceTile(myBoard,x+1,y),
-					new pieceTile(myBoard,x+2,y)];
+	constructor(myBoard,x,y,colorBoard){
+		super(myBoard,x,y,colorBoard,"#36e0de");
+		this.x += 0.5;
+		this.y += 0.5;
+		this.pieces = [new pieceTile(myBoard,x,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x-1,y,this.colorBoard,this.color), 
+					new pieceTile(myBoard,x+1,y,this.colorBoard,this.color),
+					new pieceTile(myBoard,x+2,y,this.colorBoard,this.color)];
+		this.id = 7;
+	}	
+}
+
+//Holds next pieces
+class nextQ{
+	constructor(){
+		this.next = [0,0,0,0,0,0];
+	}
+	populate(){
+		for(var i = 0; i<this.next.length;i++){
+			this.next[i] = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
+		}
+	}
+	increment(){
+		for(var i = 0; i<5;i++){
+			this.next[i] = this.next[i+1];
+		}
+		this.next[4] = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
+	}
+	
+}
+
+//Generates a piece based on a number 1-7
+function generatePiece(myBoard,x,y,colorBoard,rand){
+
+		switch(rand){
+			case(1):return new oPiece(myBoard, x, y, colorBoard);break;
+			case(2):return new tPiece(myBoard, x, y, colorBoard);break;
+			case(3):return new sPiece(myBoard, x, y, colorBoard);break;
+			case(4):return new zPiece(myBoard, x, y, colorBoard);break;
+			case(5):return new lPiece(myBoard, x, y, colorBoard);break;
+			case(6):return new jPiece(myBoard, x, y, colorBoard);break;
+			case(7):return new iPiece(myBoard, x, y, colorBoard);break;
+		}
+}
+
+function renderNextPieces() {
+	for (let i = 0; i < 5; i++) {
+		// Clear each board and color board
+		for (let y = 0; y < 2; y++) {
+			for (let x = 0; x < 4; x++) {
+				nextBoxes[i][y][x] = 0;
+				nextColorBoards[i][y][x] = null;
+			}
+		}
+		// Create new piece on its board (centered)
+		generatePiece(nextBoxes[i], 1, 1, nextColorBoards[i], queue.next[i]);
+		// Display to canvas
+		displayToCanvas(nextBoxes[i], nextColorBoards[i], nextCanvases[i]);
 	}
 }
 
 
-displayToCanvas(board);
+function holdPiece() {
+	if (holdUsed) return; // Prevent multiple holds in one turn
 
-let currentPiece = new tPiece(board, 4, 1); // Start with an O piece
+	// Clear hold box
+	for (let y = 0; y < 2; y++) {
+		for (let x = 0; x < 4; x++) {
+			holdBox[y][x] = 0;
+			holdColorBoard[y][x] = null;
+		}
+	}
 
+	currentPiece.remove(); // Remove from main board
+
+	if (!heldPiece) {
+		// First time holding
+		heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard, currentPiece.id);
+		currentPiece = generatePiece(board, 4, 1, colorBoard, queue.next[0]);
+		queue.increment();
+		renderNextPieces();
+	} else {
+		let tempId = currentPiece.id;
+		currentPiece = generatePiece(board, 4, 1, colorBoard, heldPiece.id);
+		heldPiece = generatePiece(holdBox, 1, 1, holdColorBoard, tempId);
+	}
+
+	holdUsed = true;
+
+	displayToCanvas(holdBox, holdColorBoard, holdCanvas);
+}
+
+
+function moveKey(key) {
+    if (key === "ArrowLeft") {
+        currentPiece.moveLeft();
+    } else if (key === "ArrowRight") {
+        currentPiece.moveRight();
+    } else if (key === "ArrowDown") {
+        currentPiece.moveDown();
+    }
+
+    displayToCanvas(board, colorBoard, ctx);
+}
+
+
+
+
+
+displayToCanvas(board,colorBoard,ctx);
+
+
+// Creating board and piece
+let queue = new nextQ();
+queue.populate();
+
+let currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
+queue.increment();
+renderNextPieces();
+
+// DAS/ARR Stuff
+let keyStates = {
+    ArrowLeft: false,
+    ArrowRight: false,
+    ArrowDown: false,
+};
+
+let dasDelay = 100; // milliseconds
+let arrInterval = 20;
+
+let dasTimeouts = {};
+let arrIntervals = {};
+
+
+// Handling inputs for pieces
 function handleKeyDown(event) {
-	if (event.key === "ArrowLeft") {
-		currentPiece.moveLeft(); // Move piece left
-	} else if (event.key === "ArrowRight") {
-		currentPiece.moveRight(); // Move piece right
-	} else if (event.key === "ArrowDown") {
-		currentPiece.moveDown();
-	} else if (event.key === "x") {
-		currentPiece.flipA();
-	} else if (event.key === "z") {
-		currentPiece.flipB();
-	}
+    const key = event.key;
 
-	displayToCanvas(board); // Redraw the board after the move
+    if (!keyStates[key]) {
+        keyStates[key] = true;
+
+        if (key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowDown") {
+            moveKey(key); // Do one immediate move
+            dasTimeouts[key] = setTimeout(() => {
+                arrIntervals[key] = setInterval(() => moveKey(key), arrInterval);
+            }, dasDelay);
+        }
+    }
+
+    if (key === "x" || key === "ArrowUp") {
+        currentPiece.flip(1);
+    } else if (key === "z") {
+        currentPiece.flip(-1);
+    } else if (event.code === "Space") {
+        currentPiece.hardDrop();
+    } else if (key ==="c") {
+			holdPiece();
+			
+		}
+
+    displayToCanvas(board, colorBoard,ctx);
 }
+
+function handleKeyUp(event) {
+    const key = event.key;
+    keyStates[key] = false;
+
+    if (dasTimeouts[key]) {
+        clearTimeout(dasTimeouts[key]);
+        dasTimeouts[key] = null;
+    }
+
+    if (arrIntervals[key]) {
+        clearInterval(arrIntervals[key]);
+        arrIntervals[key] = null;
+    }
+}
+
 
 // Add event listener for keydown
 window.addEventListener("keydown", handleKeyDown);
+window.addEventListener("keyup", handleKeyUp);
+
+let dropDelay = 48;
+let topOut = false;
+let gameCount = 1;
+let lockDelay = 48;
+let lockCount = 0;
 
 
-
+// Game looop
 function gameLoop() {
-	// Try to move down
-	if (currentPiece.canMoveDown()) {
-		currentPiece.moveDown();
-	} else {
-		// Lock the piece in place (it's already projected on the board)
-		// Check for cleared lines
-		for (let row = 0; row < board.length; row++) {
-			if (isCleared(board, 20 - row)) {
-				lineClear(board, 20 - row);
+	if(!topOut){
+		if (currentPiece.canMoveDown()) {
+			if(gameCount%dropDelay === 0){
+				currentPiece.moveDown();
+			}
+		} 
+		else {
+			if(currentPiece.locked){
+				//Line Clear Check
+				let linesOnClear = 0;
+				for (let row = 0; row < board.length; row++) {
+					if (isCleared(board, 20 - row)) {
+						lineClear(board, 20 - row);
+						
+						linesOnClear++;
+					}
+				}
+				switch(linesOnClear){
+					case(0):score+=0;break;
+					case(1):score+=(40*(level+1));break;
+					case(2):score+=(100*(level+1));break;
+					case(3):score+=(300*(level+1));break;
+					case(4):score+=(1200*(level+1));break;
+				}
+				level = Math.floor(lines/10);
+				dropDelay = 48-5*(level);
+				if(dropDelay<1){
+					dropDelay=1;
+				}
+				scoreDisplay.textContent = "Score: " +score;
+				levelDisplay.textContent = "Level: " +level;
+				//Check for top out
+				if(currentPiece.y === 1){
+					topOut = true;
+				}
+				//Create new Piece
+				currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
+				holdUsed = false;
+				gameCount = 1;
+				queue.increment();
+				renderNextPieces();
+				lockCount = 0;
+			}
+			lockCount++;
+			if(lockCount === lockDelay){
+				currentPiece.locked = true;
 			}
 		}
-		// Spawn a new piece (you can randomize this later)
-		// let rand = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
-		let rand = 2;
-		switch(rand){
-			case(1):currentPiece = new oPiece(board, 4, 1);break;
-			case(2):currentPiece = new tPiece(board, 4, 1);break;
-			case(3):currentPiece = new sPiece(board, 4, 1);break;
-			case(4):currentPiece = new zPiece(board, 4, 1);break;
-			case(5):currentPiece = new lPiece(board, 4, 1);break;
-			case(6):currentPiece = new jPiece(board, 4, 1);break;
-			case(7):currentPiece = new iPiece(board, 4, 1);break;
-		}
-		
+		gameCount++;
 	}
-	displayToCanvas(board);
+	displayToCanvas(board,colorBoard,ctx);
+	
 }
-
-// Run the loop every 500ms (or faster for more difficulty)
-setInterval(gameLoop, 500);
-
-
-
-							
+// Running game ata bout 60 fps
+setInterval(gameLoop, 17);			

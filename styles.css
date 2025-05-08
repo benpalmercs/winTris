@@ -1,0 +1,51 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: #9e9cab;  */
+    background: #1b1a78;
+    /* background: linear-gradient(90deg, rgba(8, 108, 196, 1) 0%, rgba(242, 242, 242, 1) 100%, rgba(0, 0, 0, 1) 100%); */
+  }
+
+#gameCanvas {
+            border: 4px solid rgb(168, 161, 161);
+            margin: 20px;
+        }
+.nextBox {
+            border: 4px solid rgb(168, 161, 161);
+            margin: 20px;
+        }
+				
+.gamenext {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+.nextBoxes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.container {
+    justify-content:center;
+}
+
+.gameText {
+    border: 4px solid rgb(168, 161, 161);
+    margin: 20px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 25px;
+    letter-spacing: -1.6px;
+    word-spacing: -2px;
+    color: #F3F3FF;
+    font-weight: 700;
+    text-decoration: none;
+    font-style: normal;
+    font-variant: normal;
+    text-transform: uppercase;
+}
