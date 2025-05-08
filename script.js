@@ -2,57 +2,61 @@
 //Canvases
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const nextCanvases = [
-	document.getElementById("next1").getContext("2d"),
-	document.getElementById("next2").getContext("2d"),
-	document.getElementById("next3").getContext("2d"),
-	document.getElementById("next4").getContext("2d"),
-	document.getElementById("next5").getContext("2d")
-];
-const holdCanvas = document.getElementById("holdBox").getContext("2d");
 
-//Text
-const lineCountDisplay = document.getElementById("lineCount");
-const scoreDisplay = document.getElementById("score");
-const levelDisplay = document.getElementById("level");
-
-
-//Values
-let lines = 200;
-let level = 0;
-let score = 0;
-// let levelSpeeds = new Map([[0, 48],[1, 43],[2, 38],[3, 33],[4, 28],[5, 23],[6, 18],[7, 13],[8, 8],[9, 6],[10,5],[13,4][16,3][19,2][29,1]]);
-
-//Colorboards
-const colorBoard = Array.from({ length: 20 }, () => Array(10).fill(null));
-let nextColorBoards = [];
-for (let i = 0; i < 5; i++) {
-  // 4x4 board filled with 0 (no color)
-  let colorB = Array.from({ length: 2 }, () =>
-    Array(4).fill(null)
-  );
-  nextColorBoards.push(colorB);
+let board = [[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0],
+			[0,0,0,0,0,0,0,0,0,0]];
+function displayBoard(board){
+	let string = "";
+	for(var y = 0;y<board.length;y++){
+		let string = "";
+		for(var x = 0;x<board[y].length;x++){
+			string += board[y][x];
+			string+= "  ";
+		}
+		console.log(string);
+	}
+	console.log(" ");
 }
-let holdColorBoard = Array.from({length: 2}, () => Array(4).fill(null));
 
-//Board Arrays
-let board = Array.from({ length: 20 }, () => Array(10).fill(0));
-let nextBoxes = Array.from({ length: 5 }, () =>
-	Array.from({ length: 2 }, () => Array(4).fill(0))
-);
-let holdBox = Array.from({length: 2}, () => Array(4).fill(0));
+function fancyDisplay(board) {
+	const filled = "■"; // You could also try "⬜" or "🟦" for more color
+	const empty = " ";
+	const topBorder = "┌" + "──".repeat(board[0].length) + "┐";
+	const bottomBorder = "└" + "──".repeat(board[0].length) + "┘";
+	
+	console.log(topBorder);
+	for (let y = 0; y < board.length; y++) {
+		let rowStr = "│";
+		for (let x = 0; x < board[y].length; x++) {
+			rowStr += board[y][x] ? filled + " " : empty + " ";
+		}
+		rowStr += "│";
+		console.log(rowStr);
+	}
+	console.log(bottomBorder);
+	console.log("\n");
+}
 
-//Miscallaneous Standard Variables
-let holdUsed = false;
-let heldPiece = null;
-let nextPieces = [null,null,null,null,null];
-
-
-//Displaying to Canvases
-function displayToCanvas(board, colorBoard, ctx) {
-	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-	const cellSize = 30; // or whatever size you're using
+function displayToCanvas(board) {
+	ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawing
 
 	for (let y = 0; y < board.length; y++) {
 		for (let x = 0; x < board[y].length; x++) {
@@ -537,67 +541,40 @@ function handleKeyUp(event) {
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
 
-let dropDelay = 48;
-let topOut = false;
-let gameCount = 1;
-let lockDelay = 48;
-let lockCount = 0;
 
 
 // Game looop
 function gameLoop() {
-	if(!topOut){
-		if (currentPiece.canMoveDown()) {
-			if(gameCount%dropDelay === 0){
-				currentPiece.moveDown();
-			}
-		} 
-		else {
-			if(currentPiece.locked){
-				//Line Clear Check
-				let linesOnClear = 0;
-				for (let row = 0; row < board.length; row++) {
-					if (isCleared(board, 20 - row)) {
-						lineClear(board, 20 - row);
-						
-						linesOnClear++;
-					}
-				}
-				switch(linesOnClear){
-					case(0):score+=0;break;
-					case(1):score+=(40*(level+1));break;
-					case(2):score+=(100*(level+1));break;
-					case(3):score+=(300*(level+1));break;
-					case(4):score+=(1200*(level+1));break;
-				}
-				level = Math.floor(lines/10);
-				dropDelay = 48-5*(level);
-				if(dropDelay<1){
-					dropDelay=1;
-				}
-				scoreDisplay.textContent = "Score: " +score;
-				levelDisplay.textContent = "Level: " +level;
-				//Check for top out
-				if(currentPiece.y === 1){
-					topOut = true;
-				}
-				//Create new Piece
-				currentPiece = generatePiece(board,4,1,colorBoard,queue.next[0]);
-				holdUsed = false;
-				gameCount = 1;
-				queue.increment();
-				renderNextPieces();
-				lockCount = 0;
-			}
-			lockCount++;
-			if(lockCount === lockDelay){
-				currentPiece.locked = true;
+	// Try to move down
+	if (currentPiece.canMoveDown()) {
+		currentPiece.moveDown();
+	} else {
+		// Lock the piece in place (it's already projected on the board)
+		// Check for cleared lines
+		for (let row = 0; row < board.length; row++) {
+			if (isCleared(board, 20 - row)) {
+				lineClear(board, 20 - row);
 			}
 		}
-		gameCount++;
+		// Spawn a new piece (you can randomize this later)
+		let rand = Math.floor(Math.random() * (7 - 1 + 1)) + 1;
+		switch(rand){
+			case(1):currentPiece = new oPiece(board, 4, 1);break;
+			case(2):currentPiece = new tPiece(board, 4, 1);break;
+			case(3):currentPiece = new sPiece(board, 4, 1);break;
+			case(4):currentPiece = new zPiece(board, 4, 1);break;
+			case(5):currentPiece = new lPiece(board, 4, 1);break;
+			case(6):currentPiece = new jPiece(board, 4, 1);break;
+			case(7):currentPiece = new iPiece(board, 4, 1);break;
+		}
+		
 	}
-	displayToCanvas(board,colorBoard,ctx);
-	
+	displayToCanvas(board);
 }
-// Running game ata bout 60 fps
-setInterval(gameLoop, 17);			
+
+// Run the loop every 500ms (or faster for more difficulty)
+setInterval(gameLoop, 500);
+
+
+
+							
