@@ -22,7 +22,7 @@ const levelDisplay = document.getElementById("level");
 
 
 //Values
-let lines = 200;
+let lines = 0;
 let level = 0;
 let score = 0;
 // let levelSpeeds = new Map([[0, 48],[1, 43],[2, 38],[3, 33],[4, 28],[5, 23],[6, 18],[7, 13],[8, 8],[9, 6],[10,5],[13,4][16,3][19,2][29,1]]);
@@ -633,8 +633,8 @@ function gameLoop() {
                 }
                 level = Math.floor(lines/10);
                 dropDelay = 48-5*(level);
-                if(dropDelay<1){
-                    dropDelay=1;
+                if(dropDelay<3){
+                    dropDelay=3;
                 }
                 scoreDisplay.textContent = "Score: " +score;
                 levelDisplay.textContent = "Level: " +level;

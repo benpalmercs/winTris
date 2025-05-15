@@ -52,4 +52,6 @@ body, html {
     font-style: normal;
     font-variant: normal;
     text-transform: uppercase;
+    width: 200px;
+    height: 30px;
 }
